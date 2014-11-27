@@ -168,8 +168,6 @@ final class WC_Related_Products_By_Attributes {
 
 			// Order by found product ids priority
 			$query['orderby'] = "ORDER BY FIELD( p.ID, $p_ids ) ASC";
-
-			var_dump( implode( ' ', $query ) );
 		}
 
 		return $query;
@@ -304,7 +302,7 @@ final class WC_Related_Products_By_Attributes {
 
 			$sql  = $wpdb->get_results( implode( ' ', $query ) );
 			$sql2 = $wpdb->get_results( "SELECT $counter" );
-			var_dump( $sql, (int) $sql2[0]->$counter, implode( ' ', $query ) );
+			// var_dump( $sql, (int) $sql2[0]->$counter, implode( ' ', $query ) );
 
 			// Reset clauses
 			$query['fields'] = $fields;
