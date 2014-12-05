@@ -9,7 +9,7 @@
 
 /**
  * Plugin Name:       WooCommerce Related Products by Attributes
- * Description:       Modify the WooCommerce related products logic to relate them by attributes
+ * Description:       Relate WooCommerce products by product attributes.
  * Plugin URI:        https://github.com/lmoffereins/wc-related-products-by-attributes/
  * Version:           1.0.0
  * Author:            Laurens Offereins
@@ -90,7 +90,7 @@ final class WC_Related_Products_By_Attributes {
 
 		// Admin
 		add_filter( 'woocommerce_product_settings',                      array( $this, 'register_settings'          ) );
-		add_action( 'woocommerce_admin_field_wcrpba_attribute_priority', array( $this, 'attribute_priority_setting' ) );
+		add_action( 'woocommerce_admin_field_wcrpba_attribute_priority', array( $this, 'setting_attribute_priority' ) );
 
 		// Plugin action links
 		add_filter( 'plugin_action_links', array( $this, 'plugin_links' ), 10, 2 );
@@ -206,7 +206,7 @@ final class WC_Related_Products_By_Attributes {
 		 * This is based on a user defined order, which enables
 		 * manual prioritization of the different attributes.
 		 */
-		$tax_factor = isset( $this->priorities[ $taxonomy ] ) ? (int) $this->priorities[ $taxonomy ]  : 10;
+		$tax_factor = isset( $this->priorities[ $taxonomy ] ) ? (int) $this->priorities[ $taxonomy ] : 10;
 
 		// Define final priority
 		$priority = $term_factor * $tax_factor;
@@ -335,9 +335,9 @@ final class WC_Related_Products_By_Attributes {
 			), 
 
 			// Attribute Priority
-			'wcrpba_setting_attribute_priority' => array(
+			'wcrpba_attribute_priority' => array(
 				'title'    => __( 'Attribute Priority', 'wc-related-products-by-attributes' ),
-				'desc'     => __( 'Set the attribute priority values.', 'wc-related-products-by-attributes' ),
+				'desc'     => __( "A priority of %s means the attribute will be excluded from defining the relations.", 'wc-related-products-by-attributes' ), '<code>0</code>' ),
 				'id'       => 'wcrpba_attribute_priority',
 				'type'     => 'wcrpba_attribute_priority', // Custom type, with a custom callback
 				'desc_tip' => true,
@@ -386,11 +386,11 @@ final class WC_Related_Products_By_Attributes {
 	 * @uses wc_get_attribute_taxonomies()
 	 * @uses wp_count_terms()
 	 * @uses wc_attribute_label()
-	 * @uses apply_filters() Calls 'wcrpba_display_attribute_priority'
+	 * @uses apply_filters() Calls 'wcrpba_setting_attribute_priority'
 	 *
 	 * @param array $setting The setting's data
 	 */
-	public function attribute_priority_setting( $setting ) {
+	public function setting_attribute_priority( $setting ) {
 
 		// Get settings' option value
 		$option_value = get_option( $setting['id'], array() );
@@ -418,7 +418,7 @@ final class WC_Related_Products_By_Attributes {
 			<th scope="row" class="titledesc"><?php _e( 'Attribute Priority', 'wc-related-products-by-attributes' ); ?></th>
 			<td>
 				<p class="description">
-					<?php printf( __( "A priority of %s means the attribute will be excluded from defining the relations.", 'wc-related-products-by-attributes' ), '<code>0</code>' ); ?>
+					<?php echo $setting['desc']; ?>
 				</p>
 
 				<ul class="wcrpba_attributes">
@@ -428,7 +428,7 @@ final class WC_Related_Products_By_Attributes {
 					<li class="attribute">
 						<label for="wcrpba_attribute_priority_<?php echo $taxonomy; ?>"><?php echo wc_attribute_label( $taxonomy ); ?></label>
 						<input  id="wcrpba_attribute_priority_<?php echo $taxonomy; ?>" type="number" name="wcrpba_attribute_priority[<?php echo $taxonomy; ?>]" value="<?php echo esc_attr( $value ); ?>" min="0" step="1" class="small-text">
-						<span class="term_factor description">(<?php printf( __( '%s terms', 'wc-related-products-by-attributes' ), wp_count_terms( $taxonomy ) ); ?>)</span>
+						<span class="term_factor description">(<?php printf( _x( '%d terms', 'The taxonomy term count', 'wc-related-products-by-attributes' ), wp_count_terms( $taxonomy ) ); ?>)</span>
 					</li>
 
 					<?php endforeach; ?>
@@ -448,7 +448,7 @@ final class WC_Related_Products_By_Attributes {
 		// Store and end output buffer in variable
 		$output = ob_get_clean();
 
-		echo apply_filters( 'wcrpba_display_attribute_priority', $output, $setting );
+		echo apply_filters( 'wcrpba_setting_attribute_priority', $output, $setting );
 	}
 
 	/**
@@ -490,7 +490,7 @@ function wc_related_products_by_attributes() {
 	return WC_Related_Products_By_Attributes::instance();
 }
 
-// Initiate on woocommerce_init. Prevents from running when WC is not active
+// Run when WC is initiated
 add_action( 'woocommerce_init', 'wc_related_products_by_attributes' );
 
 endif; // class_exists
