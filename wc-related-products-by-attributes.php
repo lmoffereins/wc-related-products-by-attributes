@@ -89,8 +89,9 @@ final class WC_Related_Products_By_Attributes {
 		// add_filter( 'woocommerce_product_related_posts_query', array( $this, 'relate_by_sql_attributes' ), 10, 2 );
 
 		// Admin
-		add_filter( 'woocommerce_product_settings',                      array( $this, 'register_settings'          ) );
-		add_action( 'woocommerce_admin_field_wcrpba_attribute_priority', array( $this, 'setting_attribute_priority' ) );
+		add_filter( 'woocommerce_product_settings',                       array( $this, 'register_settings'           ) );
+		add_action( 'woocommerce_admin_field_wcrpba_attribute_priority',  array( $this, 'setting_attribute_priority'  ) );
+		add_action( 'woocommerce_admin_field_wcrpba_attribute_threshold', array( $this, 'setting_attribute_threshold' ) );
 
 		// Plugin action links
 		add_filter( 'plugin_action_links', array( $this, 'plugin_links' ), 10, 2 );
@@ -337,10 +338,23 @@ final class WC_Related_Products_By_Attributes {
 			// Attribute Priority
 			'wcrpba_attribute_priority' => array(
 				'title'    => __( 'Attribute Priority', 'wc-related-products-by-attributes' ),
-				'desc'     => __( "A priority of %s means the attribute will be excluded from defining the relations.", 'wc-related-products-by-attributes' ), '<code>0</code>' ),
+				'desc'     => sprintf( __( 'A priority of %s means the attribute will be excluded from defining the relations.', 'wc-related-products-by-attributes' ), '<code>0</code>' ),
 				'id'       => 'wcrpba_attribute_priority',
 				'type'     => 'wcrpba_attribute_priority', // Custom type, with a custom callback
 				'desc_tip' => true,
+				'autoload' => false
+			),
+
+			// Attribute threshold
+			'wcrpba_attribute_threshold' => array(
+				'title'    => __( 'Attribute Threshold', 'wc-related-products-by-attributes' ),
+				'desc'     => __( 'Use a threshold: all products with a match of less than %s will be excluded', 'wc-related-products-by-attributes' ),
+				'id'       => 'wcrpba_attribute_threshold',
+				'type'     => 'wcrpba_attribute_threshold', // Custom type, with a custom callback
+				'default'  => array(
+					'enabled'   => 0,
+					'threshold' => 75
+				),
 				'autoload' => false
 			),
 
@@ -415,7 +429,7 @@ final class WC_Related_Products_By_Attributes {
 		ob_start(); ?>
 
 		<tr valign="top" id="<?php echo $setting['id']; ?>">
-			<th scope="row" class="titledesc"><?php _e( 'Attribute Priority', 'wc-related-products-by-attributes' ); ?></th>
+			<th scope="row" class="titledesc"><?php echo $setting['title']; ?></th>
 			<td>
 				<p class="description">
 					<?php echo $setting['desc']; ?>
@@ -449,6 +463,40 @@ final class WC_Related_Products_By_Attributes {
 		$output = ob_get_clean();
 
 		echo apply_filters( 'wcrpba_setting_attribute_priority', $output, $setting );
+	}
+
+	/**
+	 * Output the content for the Attribute Threshold setting
+	 *
+	 * @since 1.1.0
+	 *
+	 * @uses get_option()
+	 * @uses apply_filters() Calls 'wcrpba_setting_attribute_threshold'
+	 *
+	 * @param array $setting The setting's data
+	 */
+	public function setting_attribute_threshold( $setting ) {
+
+		// Get settings' option value
+		$option_value = wp_parse_args( get_option( $setting['id'], array() ), $setting['default'] );
+
+		// Start output buffer
+		ob_start(); ?>
+
+		<tr valign="top">
+			<th scope="row" class="titledesc"><?php echo $setting['title']; ?></th>
+			<td>
+				<input type="checkbox" id="<?php echo $setting['id']; ?>" name="<?php echo $setting['id']; ?>[enabled]" value="1" <?php checked( (bool) $option_value['enabled'] ); ?>/>
+				<label for="<?php echo $setting['id']; ?>"><?php printf( $setting['desc'], sprintf( '<input type="number" name="%s" value="%s" class="small-text" min="0" max="100" step="1" />&#37;', $setting['id'] . '[threshold]', $option_value['threshold'] ) ); ?></label>
+			</td>
+		</tr>
+
+		<?php
+
+		// Store and end output buffer in variable
+		$output = ob_get_clean();
+
+		echo apply_filters( 'wcrpba_setting_attribute_threshold', $output, $setting );
 	}
 
 	/**
