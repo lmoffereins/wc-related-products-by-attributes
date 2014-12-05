@@ -66,7 +66,8 @@ final class WC_Related_Products_By_Attributes {
 	 * @since 1.0.0
 	 */
 	private function setup_globals() {
-		$this->priorities = get_option( 'wcrpba_attribute_priority', array() );
+		$this->priorities = get_option( 'wcrpba_attribute_priority',  array() );
+		$this->threshold  = get_option( 'wcrpba_attribute_threshold', array() );
 	}
 
 	/**
@@ -158,17 +159,38 @@ final class WC_Related_Products_By_Attributes {
 			// Sort all products by their priority value
 			arsort( $products );
 
+			// Apply threshold: remove all selections below the threshold
+			if ( isset( $this->threshold['enabled'] ) && $this->threshold['enabled'] ) {
+
+				// Define priority ceiling and threshold
+				$max_priority = $products[ $product_id ];
+				$threshold    = (int) $this->threshold['threshold'];
+
+				// Remove products with a priority lower than the given percentage of the ceiling
+				$products = array_filter( $products, function( $priority ) use ( $max_priority, $threshold ) {
+					return ( $priority / $max_priority ) * 100 > $threshold;
+				});
+			}
+
 			// Remove current product, when queried
 			unset( $products[ $product_id ] );
 
-			// Collect product ids in string
-			$p_ids = implode( ',', array_keys( $products ) );
-			
-			// Append found product ids to where clause
-			$query['where'] .= " AND p.ID IN ( $p_ids )";
+			// There are matches, so query them
+			if ( ! empty( $products ) ) {
 
-			// Order by found product ids priority
-			$query['orderby'] = "ORDER BY FIELD( p.ID, $p_ids ) ASC";
+				// Collect product ids in string
+				$p_ids = implode( ',', array_keys( $products ) );
+				
+				// Append found product ids to where clause
+				$query['where'] .= " AND p.ID IN ( $p_ids )";
+
+				// Order by found product ids priority
+				$query['orderby'] = "ORDER BY FIELD( p.ID, $p_ids ) ASC";
+			
+			// No matches, so query no products at all
+			} else {
+				$query['where'] .= " AND 0 == 1";
+			}
 		}
 
 		return $query;
