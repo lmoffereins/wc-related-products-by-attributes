@@ -11,7 +11,7 @@
  * Plugin Name:       WooCommerce Related Products by Attributes
  * Description:       Relate WooCommerce products by product attributes.
  * Plugin URI:        https://github.com/lmoffereins/wc-related-products-by-attributes/
- * Version:           1.0.0
+ * Version:           1.1.0
  * Author:            Laurens Offereins
  * Author URI:        https://github.com/lmoffereins/
  * Text Domain:       wc-related-products-by-attributes
